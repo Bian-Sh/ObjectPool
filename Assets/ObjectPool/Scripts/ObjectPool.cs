@@ -15,10 +15,10 @@ public sealed class ObjectPool : MonoBehaviour
 
 	static ObjectPool _instance;
 	static List<GameObject> tempList = new List<GameObject>();
-	
+
 	Dictionary<GameObject, List<GameObject>> pooledObjects = new Dictionary<GameObject, List<GameObject>>();
 	Dictionary<GameObject, GameObject> spawnedObjects = new Dictionary<GameObject, GameObject>();
-	
+
 	public StartupPoolMode startupPoolMode;
 	public StartupPool[] startupPools;
 
@@ -75,7 +75,7 @@ public sealed class ObjectPool : MonoBehaviour
 			}
 		}
 	}
-	
+
 	public static T Spawn<T>(T prefab, Transform parent, Vector3 position, Quaternion rotation) where T : Component
 	{
 		return Spawn(prefab.gameObject, parent, position, rotation).GetComponent<T>();
@@ -118,7 +118,11 @@ public sealed class ObjectPool : MonoBehaviour
 				if (obj != null)
 				{
 					trans = obj.transform;
-					trans.parent = parent;
+					if (parent != null)
+					{
+						bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
+						trans.SetParent(parent, worldPositionStays);
+					}
 					trans.localPosition = position;
 					trans.localRotation = rotation;
 					obj.SetActive(true);
@@ -128,7 +132,11 @@ public sealed class ObjectPool : MonoBehaviour
 			}
 			obj = (GameObject)Object.Instantiate(prefab);
 			trans = obj.transform;
-			trans.parent = parent;
+			if (parent != null)
+			{
+				bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
+				trans.SetParent(parent, worldPositionStays);
+			}
 			trans.localPosition = position;
 			trans.localRotation = rotation;
 			instance.spawnedObjects.Add(obj, prefab);
@@ -138,7 +146,11 @@ public sealed class ObjectPool : MonoBehaviour
 		{
 			obj = (GameObject)Object.Instantiate(prefab);
 			trans = obj.GetComponent<Transform>();
-			trans.parent = parent;
+			if (parent != null)
+			{
+				bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
+				trans.SetParent(parent, worldPositionStays);
+			}
 			trans.localPosition = position;
 			trans.localRotation = rotation;
 			return obj;
@@ -205,7 +217,7 @@ public sealed class ObjectPool : MonoBehaviour
 			Recycle(tempList[i]);
 		tempList.Clear();
 	}
-	
+
 	public static bool IsSpawned(GameObject obj)
 	{
 		return instance.spawnedObjects.ContainsKey(obj);
@@ -356,7 +368,7 @@ public static class ObjectPoolExtensions
 	{
 		ObjectPool.CreatePool(prefab, initialPoolSize);
 	}
-	
+
 	public static T Spawn<T>(this T prefab, Transform parent, Vector3 position, Quaternion rotation) where T : Component
 	{
 		return ObjectPool.Spawn(prefab, parent, position, rotation);
@@ -405,7 +417,7 @@ public static class ObjectPoolExtensions
 	{
 		return ObjectPool.Spawn(prefab, null, Vector3.zero, Quaternion.identity);
 	}
-	
+
 	public static void Recycle<T>(this T obj) where T : Component
 	{
 		ObjectPool.Recycle(obj);
