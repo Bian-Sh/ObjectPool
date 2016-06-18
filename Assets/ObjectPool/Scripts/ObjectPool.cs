@@ -120,8 +120,7 @@ public sealed class ObjectPool : MonoBehaviour
 					trans = obj.transform;
 					if (parent != null)
 					{
-						bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
-						trans.SetParent(parent, worldPositionStays);
+						trans.SetParent(parent, false); // worldPositionStays=false to keep UI objects spawning consistently
 					}
 					trans.localPosition = position;
 					trans.localRotation = rotation;
@@ -134,8 +133,7 @@ public sealed class ObjectPool : MonoBehaviour
 			trans = obj.transform;
 			if (parent != null)
 			{
-				bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
-				trans.SetParent(parent, worldPositionStays);
+				trans.SetParent(parent, false); // worldPositionStays=false to keep UI objects spawning consistently
 			}
 			trans.localPosition = position;
 			trans.localRotation = rotation;
