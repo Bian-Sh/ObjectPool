@@ -104,7 +104,8 @@ public sealed class ObjectPool : MonoBehaviour
 	{
 		List<GameObject> list;
 		Transform trans;
-		GameObject obj;
+		GameObject obj = null;
+		CreatePool(prefab.gameObject, 0); // will create pool if none exists
 		if (instance.pooledObjects.TryGetValue(prefab, out list))
 		{
 			obj = null;
@@ -140,21 +141,8 @@ public sealed class ObjectPool : MonoBehaviour
 			trans.localPosition = position;
 			trans.localRotation = rotation;
 			instance.spawnedObjects.Add(obj, prefab);
-			return obj;
 		}
-		else
-		{
-			obj = (GameObject)Object.Instantiate(prefab);
-			trans = obj.GetComponent<Transform>();
-			if (parent != null)
-			{
-				bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
-				trans.SetParent(parent, worldPositionStays);
-			}
-			trans.localPosition = position;
-			trans.localRotation = rotation;
-			return obj;
-		}
+		return obj;
 	}
 	public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position)
 	{
@@ -185,9 +173,14 @@ public sealed class ObjectPool : MonoBehaviour
 	{
 		GameObject prefab;
 		if (instance.spawnedObjects.TryGetValue(obj, out prefab))
+		{
 			Recycle(obj, prefab);
+		}
 		else
+		{
+			Debug.LogWarning(obj.name + "can not be recycled because it was never pooled. It will be destroyed instead.");
 			Object.Destroy(obj);
+		}
 	}
 	static void Recycle(GameObject obj, GameObject prefab)
 	{
