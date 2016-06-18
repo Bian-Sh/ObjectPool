@@ -64,11 +64,10 @@ public sealed class ObjectPool : MonoBehaviour
 			{
 				bool active = prefab.activeSelf;
 				prefab.SetActive(false);
-				Transform parent = instance.transform;
 				while (list.Count < initialPoolSize)
 				{
 					var obj = (GameObject)Object.Instantiate(prefab);
-					obj.transform.parent = parent;
+					obj.transform.SetParent(instance.transform, false); // worldPositionStays=false to keep UI objects spawning consistently
 					list.Add(obj);
 				}
 				prefab.SetActive(active);
@@ -186,7 +185,7 @@ public sealed class ObjectPool : MonoBehaviour
 	{
 		instance.pooledObjects[prefab].Add(obj);
 		instance.spawnedObjects.Remove(obj);
-		obj.transform.parent = instance.transform;
+		obj.transform.SetParent(instance.transform, false); // worldPositionStays=false to keep UI objects spawning consistently
 		obj.SetActive(false);
 	}
 
