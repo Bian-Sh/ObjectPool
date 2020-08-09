@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 public sealed class ObjectPool : MonoBehaviour
@@ -107,31 +106,17 @@ public sealed class ObjectPool : MonoBehaviour
             }
         }
     }
-
-    public static T Spawn<T>(T prefab, Transform parent, Vector3 position, Quaternion rotation) where T : Component
-    {
-        return Spawn(prefab.gameObject, parent, position, rotation).GetComponent<T>();
-    }
-    public static T Spawn<T>(T prefab, Vector3 position, Quaternion rotation) where T : Component
-    {
-        return Spawn(prefab.gameObject, null, position, rotation).GetComponent<T>();
-    }
-    public static T Spawn<T>(T prefab, Transform parent, Vector3 position) where T : Component
-    {
-        return Spawn(prefab.gameObject, parent, position, Quaternion.identity).GetComponent<T>();
-    }
-    public static T Spawn<T>(T prefab, Vector3 position) where T : Component
-    {
-        return Spawn(prefab.gameObject, null, position, Quaternion.identity).GetComponent<T>();
-    }
-    public static T Spawn<T>(T prefab, Transform parent) where T : Component
-    {
-        return Spawn(prefab.gameObject, parent, Vector3.zero, Quaternion.identity).GetComponent<T>();
-    }
-    public static T Spawn<T>(T prefab) where T : Component
-    {
-        return Spawn(prefab.gameObject, null, Vector3.zero, Quaternion.identity).GetComponent<T>();
-    }
+    public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position) => Spawn(prefab, parent, position, Quaternion.identity);
+    public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation) => Spawn(prefab, null, position, rotation);
+    public static GameObject Spawn(GameObject prefab, Transform parent) => Spawn(prefab, parent, Vector3.zero, Quaternion.identity);
+    public static GameObject Spawn(GameObject prefab, Vector3 position) => Spawn(prefab, null, position, Quaternion.identity);
+    public static GameObject Spawn(GameObject prefab) => Spawn(prefab, null, Vector3.zero, Quaternion.identity);
+    public static T Spawn<T>(T prefab, Transform parent, Vector3 position, Quaternion rotation) where T : Component => Spawn(prefab.gameObject, parent, position, rotation).GetComponent<T>();
+    public static T Spawn<T>(T prefab, Vector3 position, Quaternion rotation) where T : Component => Spawn(prefab.gameObject, null, position, rotation).GetComponent<T>();
+    public static T Spawn<T>(T prefab, Transform parent, Vector3 position) where T : Component => Spawn(prefab.gameObject, parent, position, Quaternion.identity).GetComponent<T>();
+    public static T Spawn<T>(T prefab, Vector3 position) where T : Component => Spawn(prefab.gameObject, null, position, Quaternion.identity).GetComponent<T>();
+    public static T Spawn<T>(T prefab, Transform parent) where T : Component => Spawn(prefab.gameObject, parent, Vector3.zero, Quaternion.identity).GetComponent<T>();
+    public static T Spawn<T>(T prefab) where T : Component => Spawn(prefab.gameObject, null, Vector3.zero, Quaternion.identity).GetComponent<T>();
     public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation)
     {
         List<GameObject> list;
@@ -173,7 +158,6 @@ public sealed class ObjectPool : MonoBehaviour
             trans.localRotation = rotation;
             obj.SetActive(true);
             Instance.spawnedObjects.Add(obj, prefab);
-
             return obj;
         }
         else
@@ -190,31 +174,8 @@ public sealed class ObjectPool : MonoBehaviour
             return obj;
         }
     }
-    public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position)
-    {
-        return Spawn(prefab, parent, position, Quaternion.identity);
-    }
-    public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
-    {
-        return Spawn(prefab, null, position, rotation);
-    }
-    public static GameObject Spawn(GameObject prefab, Transform parent)
-    {
-        return Spawn(prefab, parent, Vector3.zero, Quaternion.identity);
-    }
-    public static GameObject Spawn(GameObject prefab, Vector3 position)
-    {
-        return Spawn(prefab, null, position, Quaternion.identity);
-    }
-    public static GameObject Spawn(GameObject prefab)
-    {
-        return Spawn(prefab, null, Vector3.zero, Quaternion.identity);
-    }
 
-    public static void Recycle<T>(T obj) where T : Component
-    {
-        Recycle(obj.gameObject);
-    }
+    public static void Recycle<T>(T obj) where T : Component => Recycle(obj.gameObject);
     public static void Recycle(GameObject obj)
     {
         if (Instance.spawnedObjects.TryGetValue(obj, out GameObject prefab))
@@ -230,10 +191,7 @@ public sealed class ObjectPool : MonoBehaviour
         obj.SetActive(false);
     }
 
-    public static void RecycleAll<T>(T prefab) where T : Component
-    {
-        RecycleAll(prefab.gameObject);
-    }
+    public static void RecycleAll<T>(T prefab) where T : Component => RecycleAll(prefab.gameObject);
     public static void RecycleAll(GameObject prefab)
     {
         foreach (var item in Instance.spawnedObjects)
@@ -250,27 +208,15 @@ public sealed class ObjectPool : MonoBehaviour
             Recycle(tempList[i]);
         tempList.Clear();
     }
-
-    public static bool IsSpawned(GameObject obj)
-    {
-        return Instance.spawnedObjects.ContainsKey(obj);
-    }
-
-    public static int CountPooled<T>(T prefab) where T : Component
-    {
-        return CountPooled(prefab.gameObject);
-    }
+    public static bool IsSpawned(GameObject obj) => Instance.spawnedObjects.ContainsKey(obj);
+    public static int CountPooled<T>(T prefab) where T : Component => CountPooled(prefab.gameObject);
     public static int CountPooled(GameObject prefab)
     {
         if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> list))
             return list.Count;
         return 0;
     }
-
-    public static int CountSpawned<T>(T prefab) where T : Component
-    {
-        return CountSpawned(prefab.gameObject);
-    }
+    public static int CountSpawned<T>(T prefab) where T : Component => CountSpawned(prefab.gameObject);
     public static int CountSpawned(GameObject prefab)
     {
         int count = 0;
@@ -294,8 +240,7 @@ public sealed class ObjectPool : MonoBehaviour
             list = new List<GameObject>();
         if (!appendList)
             list.Clear();
-        List<GameObject> pooled;
-        if (Instance.pooledObjects.TryGetValue(prefab, out pooled))
+        if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> pooled))
             list.AddRange(pooled);
         return list;
     }
@@ -305,8 +250,7 @@ public sealed class ObjectPool : MonoBehaviour
             list = new List<T>();
         if (!appendList)
             list.Clear();
-        List<GameObject> pooled;
-        if (Instance.pooledObjects.TryGetValue(prefab.gameObject, out pooled))
+        if (Instance.pooledObjects.TryGetValue(prefab.gameObject, out List<GameObject> pooled))
             for (int i = 0; i < pooled.Count; ++i)
                 list.Add(pooled[i].GetComponent<T>());
         return list;
@@ -338,11 +282,10 @@ public sealed class ObjectPool : MonoBehaviour
 
     public static void DestroyPooled(GameObject prefab)
     {
-        List<GameObject> pooled;
-        if (Instance.pooledObjects.TryGetValue(prefab, out pooled))
+        if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> pooled))
         {
             for (int i = 0; i < pooled.Count; ++i)
-                GameObject.Destroy(pooled[i]);
+                Destroy(pooled[i]);
             pooled.Clear();
         }
     }
@@ -439,10 +382,7 @@ public static class ObjectPoolExtensions
         ObjectPool.Recycle(obj);
     }
 
-    public static void RecycleAll<T>(this T prefab) where T : Component
-    {
-        ObjectPool.RecycleAll(prefab);
-    }
+    public static void RecycleAll<T>(this T prefab) where T : Component => ObjectPool.RecycleAll(prefab);
     public static void RecycleAll(this GameObject prefab)
     {
         ObjectPool.RecycleAll(prefab);
