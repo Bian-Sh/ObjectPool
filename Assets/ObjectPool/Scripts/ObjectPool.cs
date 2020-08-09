@@ -2,9 +2,26 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public sealed class ObjectPool : MonoSingleton<ObjectPool>
+public sealed class ObjectPool : MonoBehaviour
 {
     public enum StartupPoolMode { Awake, Start, CallManually };
+    static ObjectPool _instance;
+    public static ObjectPool Instance
+    {
+        get
+        {
+            if (!_instance)
+            {
+                _instance = (ObjectPool)FindObjectOfType(typeof(ObjectPool));
+                if (!_instance)
+                {
+                    var go = new GameObject("[ObjectPool]");
+                    _instance = go.AddComponent<ObjectPool>();
+                }
+            }
+            return _instance;
+        }
+    }
 
     [System.Serializable]
     public class StartupPool
@@ -22,9 +39,26 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
     public StartupPool[] startupPools;
 
     bool startupPoolsCreated;
-    protected override void Awake()
+    void Awake()
     {
-        base.Awake();
+        if (_instance != null && _instance.gameObject != gameObject)
+        {
+            Debug.Log("创造了新的克隆体！");
+            if (Application.isPlaying)
+            {
+                Destroy(gameObject);
+            }
+            else
+            {
+                DestroyImmediate(gameObject);
+            }
+        }
+        else
+        {
+            _instance = GetComponent<ObjectPool>();
+            DontDestroyOnLoad(gameObject);
+            hideFlags = HideFlags.HideAndDontSave;
+        }
         if (startupPoolMode == StartupPoolMode.Awake)
             CreateStartupPools();
     }
@@ -65,7 +99,7 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
                 Transform parent = Instance.transform;
                 while (list.Count < initialPoolSize)
                 {
-                    var obj = (GameObject)Object.Instantiate(prefab);
+                    var obj = Instantiate(prefab);
                     obj.transform.SetParent(parent);
                     list.Add(obj);
                 }
@@ -118,8 +152,7 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
                     trans = obj.transform;
                     if (parent != null)
                     {
-                        bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
-                        trans.SetParent(parent, worldPositionStays);
+                        trans.SetParent(parent, !(parent is RectTransform));
                         trans.localScale = prefab.transform.localScale;
                     }
                     trans.localPosition = position;
@@ -129,12 +162,11 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
                     return obj;
                 }
             }
-            obj = (GameObject)Object.Instantiate(prefab);
+            obj = Instantiate(prefab);
             trans = obj.transform;
             if (parent != null)
             {
-                bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
-                trans.SetParent(parent, worldPositionStays);
+                trans.SetParent(parent, !(parent is RectTransform));
                 trans.localScale = prefab.transform.localScale;
             }
             trans.localPosition = position;
@@ -146,12 +178,11 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
         }
         else
         {
-            obj = (GameObject)Object.Instantiate(prefab);
+            obj = Instantiate(prefab);
             trans = obj.GetComponent<Transform>();
             if (parent != null)
             {
-                bool worldPositionStays = (parent.GetComponent<RectTransform>() == null);
-                trans.SetParent(parent, worldPositionStays);
+                trans.SetParent(parent, !(parent is RectTransform));
                 trans.localScale = prefab.transform.localScale;
             }
             trans.localPosition = position;
@@ -186,11 +217,10 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
     }
     public static void Recycle(GameObject obj)
     {
-        GameObject prefab;
-        if (Instance.spawnedObjects.TryGetValue(obj, out prefab))
+        if (Instance.spawnedObjects.TryGetValue(obj, out GameObject prefab))
             Recycle(obj, prefab);
         else
-            Object.Destroy(obj);
+            Destroy(obj);
     }
     static void Recycle(GameObject obj, GameObject prefab)
     {
@@ -232,8 +262,7 @@ public sealed class ObjectPool : MonoSingleton<ObjectPool>
     }
     public static int CountPooled(GameObject prefab)
     {
-        List<GameObject> list;
-        if (Instance.pooledObjects.TryGetValue(prefab, out list))
+        if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> list))
             return list.Count;
         return 0;
     }
