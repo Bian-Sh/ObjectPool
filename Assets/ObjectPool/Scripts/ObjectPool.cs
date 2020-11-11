@@ -93,7 +93,7 @@ public sealed class ObjectPool : MonoBehaviour
                 while (list.Count < initialPoolSize)
                 {
                     var obj = Instantiate(prefab);
-                    obj.transform.SetParent(parent);
+                    obj.transform.SetParent(parent, !(obj.transform is RectTransform));
                     list.Add(obj);
                 }
                 prefab.SetActive(active);
@@ -116,7 +116,7 @@ public sealed class ObjectPool : MonoBehaviour
         GameObject obj = null;
         if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> list))  //1. check pool first
         {
-            while (obj == null && list.Count > 0)
+            while (obj == null && list.Count > 0) // in case of unexpected destroy 
             {
                 obj = list[0];
                 list.RemoveAt(0);
@@ -127,7 +127,7 @@ public sealed class ObjectPool : MonoBehaviour
         obj.transform.localPosition = position;
         obj.transform.localRotation = rotation;
         obj.SetActive(true);
-        if (Instance.pooledObjects.ContainsKey(prefab))Instance.spawnedObjects.Add(obj, prefab); //4.only record spawned object if the prefab has been init before
+        if (Instance.pooledObjects.ContainsKey(prefab)) Instance.spawnedObjects.Add(obj, prefab); //4.only record spawned object if the prefab has been init before
         return obj;
     }
 
