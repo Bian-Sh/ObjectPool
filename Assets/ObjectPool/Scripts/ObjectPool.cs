@@ -113,48 +113,22 @@ public sealed class ObjectPool : MonoBehaviour
     public static T Spawn<T>(T prefab) where T : Component => Spawn(prefab.gameObject, null, Vector3.zero, Quaternion.identity).GetComponent<T>();
     public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation)
     {
-        List<GameObject> list;
-        Transform trans;
-        GameObject obj;
-        if (Instance.pooledObjects.TryGetValue(prefab, out list))
+        GameObject obj = null;
+        if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> list))  //1. check pool first
         {
-            obj = null;
-            if (list.Count > 0)
+            while (obj == null && list.Count > 0)
             {
-                while (obj == null && list.Count > 0)
-                {
-                    obj = list[0];
-                    list.RemoveAt(0);
-                }
-                if (obj != null)
-                {
-                    trans = obj.transform;
-                    trans.SetParent(parent, !(parent is RectTransform));
-                    trans.localPosition = position;
-                    trans.localRotation = rotation;
-                    obj.SetActive(true);
-                    Instance.spawnedObjects.Add(obj, prefab);
-                    return obj;
-                }
+                obj = list[0];
+                list.RemoveAt(0);
             }
-            obj = Instantiate(prefab);
-            trans = obj.transform;
-            trans.SetParent(parent, !(parent is RectTransform));
-            trans.localPosition = position;
-            trans.localRotation = rotation;
-            obj.SetActive(true);
-            Instance.spawnedObjects.Add(obj, prefab);
-            return obj;
         }
-        else
-        {
-            obj = Instantiate(prefab);
-            trans = obj.GetComponent<Transform>();
-            trans.SetParent(parent, !(parent is RectTransform));
-            trans.localPosition = position;
-            trans.localRotation = rotation;
-            return obj;
-        }
+        if (!obj) obj = Instantiate(prefab); // 2. instantiate if not pooled
+        obj.transform.SetParent(parent, !(obj.transform is RectTransform)); // 3. the second param should be false if the object is a ui type.
+        obj.transform.localPosition = position;
+        obj.transform.localRotation = rotation;
+        obj.SetActive(true);
+        if (Instance.pooledObjects.ContainsKey(prefab))Instance.spawnedObjects.Add(obj, prefab); //4.only record spawned object if the prefab has been init before
+        return obj;
     }
 
     public static void Recycle<T>(T obj) where T : Component => Recycle(obj.gameObject);
@@ -169,7 +143,7 @@ public sealed class ObjectPool : MonoBehaviour
     {
         Instance.pooledObjects[prefab].Add(obj);
         Instance.spawnedObjects.Remove(obj);
-        obj.transform.SetParent(Instance.transform,!(obj.transform is RectTransform));
+        obj.transform.SetParent(Instance.transform, !(obj.transform is RectTransform));
         obj.SetActive(false);
     }
 
