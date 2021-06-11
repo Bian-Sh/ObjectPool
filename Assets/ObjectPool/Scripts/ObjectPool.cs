@@ -126,7 +126,6 @@ public sealed class ObjectPool : MonoBehaviour
         obj.transform.SetParent(parent, !(obj.transform is RectTransform)); // 3. the second param should be false if the object is a ui type.
         obj.transform.localPosition = position;
         obj.transform.localRotation = rotation;
-        obj.SetActive(true);
         if (Instance.pooledObjects.ContainsKey(prefab)) Instance.spawnedObjects.Add(obj, prefab); //4.only record spawned object if the prefab has been init before
         return obj;
     }
@@ -137,7 +136,7 @@ public sealed class ObjectPool : MonoBehaviour
         if (Instance.spawnedObjects.TryGetValue(obj, out GameObject prefab))
             Recycle(obj, prefab);
         else
-            Destroy(obj);
+            DestroyImmediate(obj);
     }
     static void Recycle(GameObject obj, GameObject prefab)
     {
