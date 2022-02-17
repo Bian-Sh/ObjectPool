@@ -79,22 +79,22 @@ That looks super clean, and requires no casting on your part like the usual Unit
 
 The best way to use ObjectPool is to just completely replace Instantiate/Destroy with Spawn/Recycle. If CreatePool() was not called, Spawn/Recycle will just instantiate and destroy objects as usual, making it really easy to toggle pooling on/off per prefab.
 
-
-
 # Installation
 
 ### Install via git URL
 
-You can add `https://github.com/Bian-Sh/ObjectPool.git?path=Assets/ObjectPool` to Package Manager
+You can add `https://github.com/Bian-Sh/ObjectPool.git?path=Packages/ObjectPool` to Package Manager
 
 If you want to set a target version, uses the tag so you can specify a version like #2.1.0. For example
-`https://github.com/Bian-Sh/ObjectPool.git?path=Assets/ObjectPool#1.0.0`
+`https://github.com/Bian-Sh/ObjectPool.git?path=Packages/ObjectPool#1.0.0`
 
 ![](./doc/UPM.png)
 
-> Requires a version of unity that supports path query parameter for git packages (Unity >= 2019.3.4f1, Unity >= 2020.1a21).
+> 1. Requires a version of unity that supports path query parameter for git packages (Unity >= 2019.3.4f1, Unity >= 2020.1a21).
 > 
-> There is a high chance of failure for users in China.
+> 2. There is a high chance of failure for users in China.
+> 
+> 3. Package development needs to be done in the Package folder，perhaps for avoid GUID conflicts。
 
 # Reference
 
