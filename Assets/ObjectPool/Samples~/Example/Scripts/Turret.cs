@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using zFramework.Pool;
 
 public class Turret : MonoBehaviour
 {
@@ -17,8 +18,11 @@ public class Turret : MonoBehaviour
 			var targetRotation = Quaternion.LookRotation(aimDirection);
 			transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 360 * Time.deltaTime);
 
-			if (Input.GetMouseButtonDown(0))
-				bulletPrefab.Spawn(gun.position, gun.rotation);
+			if (Input.GetMouseButtonDown(0)) 
+			{
+				var bullet = bulletPrefab.Spawn(gun.position, gun.rotation);
+				bullet.gameObject.SetActive(true);
+			}
 		}
 	}
 }

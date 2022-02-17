@@ -1,9 +1,9 @@
-<img title="" src="./doc/brand.png" alt="" data-align="center">
+<img title="" src="./Images/brand.png" alt="" data-align="center">
 
 ObjectPool
 ==========
 
-<img title="" src="./doc/objectpool.png" alt="" data-align="inline">
+<img title="" src="./Images/objectpool.png" alt="" data-align="inline">
 
 # Features
 
@@ -75,22 +75,12 @@ bulletInstance = bulletPrefab.Spawn(position, rotation);
 bulletInstance.Recycle();
 ```
 
-That looks super clean, and requires no casting on your part like the usual Unity instantiation calls.
+That looks super clean, and requires no casting on you
 
 The best way to use ObjectPool is to just completely replace Instantiate/Destroy with Spawn/Recycle. If CreatePool() was not called, Spawn/Recycle will just instantiate and destroy objects as usual, making it really easy to toggle pooling on/off per prefab.
 
+##Reference
 
+[Unity Patterns | New Tool: ObjectPool](https://web.archive.org/web/20150516022029/http://unitypatterns.com/new-tool-objectpool/) - ducument from here
 
-# #Installation
-
-### Install via git URL
-
-You can add `https://github.com/Bian-Sh/ObjectPool.git?path=Assets/ObjectPool` to Package Manager
-
-![](./doc/UPM.png)
-
-> Requires a version of unity that supports path query parameter for git packages (Unity >= 2019.3.4f1, Unity >= 2020.1a21).
-
-# #Reference
-
-[Unity Patterns | New Tool: ObjectPool](https://web.archive.org/web/20150516022029/http://unitypatterns.com/new-tool-objectpool/)
+[GitHub - Bian-Sh/ObjectPool](https://github.com/Bian-Sh/ObjectPool) - github repository

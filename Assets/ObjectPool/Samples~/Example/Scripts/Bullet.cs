@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using zFramework.Pool;
 
 public class Bullet : MonoBehaviour
 {
@@ -28,7 +29,8 @@ public class Bullet : MonoBehaviour
 		}
 
 		//Spawn a pooled explosion prefab
-		explosionPrefab.Spawn(transform.position);
+		var exp = explosionPrefab.Spawn(transform.position);
+		exp.gameObject.SetActive(true);
 
 		//Recycle this pooled bullet instance
 		gameObject.Recycle();

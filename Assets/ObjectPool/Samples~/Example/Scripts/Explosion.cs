@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using zFramework.Pool;
 
 public class Explosion : MonoBehaviour
 {
