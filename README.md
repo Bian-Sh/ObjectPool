@@ -81,16 +81,21 @@ The best way to use ObjectPool is to just completely replace Instantiate/Destroy
 
 
 
-# #Installation
+# Installation
 
 ### Install via git URL
 
 You can add `https://github.com/Bian-Sh/ObjectPool.git?path=Assets/ObjectPool` to Package Manager
 
+If you want to set a target version, uses the tag so you can specify a version like #2.1.0. For example
+`https://github.com/Bian-Sh/ObjectPool.git?path=Assets/ObjectPool#1.0.0`
+
 ![](./doc/UPM.png)
 
 > Requires a version of unity that supports path query parameter for git packages (Unity >= 2019.3.4f1, Unity >= 2020.1a21).
+> 
+> There is a high chance of failure for users in China.
 
-# #Reference
+# Reference
 
 [Unity Patterns | New Tool: ObjectPool](https://web.archive.org/web/20150516022029/http://unitypatterns.com/new-tool-objectpool/)
