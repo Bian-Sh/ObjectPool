@@ -10,7 +10,7 @@ namespace zFramework.Pool
         static ObjectPool _instance;
         bool startupPoolsCreated;
         Dictionary<GameObject, GameObject> spawnedObjects = new Dictionary<GameObject, GameObject>();
-        Dictionary<GameObject, List<GameObject>> pooledObjects = new Dictionary<GameObject, List<GameObject>>();
+        Dictionary<GameObject, Queue<GameObject>> pooledObjects = new Dictionary<GameObject, Queue<GameObject>>();
         #endregion
 
         #region Singleton and pre-instantiate
@@ -78,7 +78,7 @@ namespace zFramework.Pool
         {
             if (prefab != null && !Instance.pooledObjects.ContainsKey(prefab))
             {
-                var list = new List<GameObject>();
+                var list = new Queue<GameObject>();
                 Instance.pooledObjects.Add(prefab, list);
 
                 if (initialPoolSize > 0)
@@ -90,7 +90,7 @@ namespace zFramework.Pool
                     {
                         var obj = Instantiate(prefab);
                         obj.transform.SetParent(parent, !(obj.transform is RectTransform));
-                        list.Add(obj);
+                        list.Enqueue(obj);
                     }
                     prefab.SetActive(active);
                 }
@@ -113,12 +113,11 @@ namespace zFramework.Pool
         public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation)
         {
             GameObject obj = null;
-            if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> list))  //1. check pool first
+            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> list))  //1. check pool first
             {
                 while (obj == null && list.Count > 0) // in case of unexpected destroy 
                 {
-                    obj = list[0];
-                    list.RemoveAt(0);
+                    obj = list.Dequeue();
                 }
             }
             if (!obj) obj = Instantiate(prefab); // 2. instantiate if not pooled
@@ -144,7 +143,7 @@ namespace zFramework.Pool
         }
         static void Recycle(GameObject obj, GameObject prefab)
         {
-            Instance.pooledObjects[prefab].Add(obj);
+            Instance.pooledObjects[prefab].Enqueue(obj);
             Instance.spawnedObjects.Remove(obj);
             obj.transform.SetParent(Instance.transform, !(obj.transform is RectTransform));
             obj.SetActive(false);
@@ -180,7 +179,7 @@ namespace zFramework.Pool
         public static int CountPooled<T>(T prefab) where T : Component => CountPooled(prefab.gameObject);
         public static int CountPooled(GameObject prefab)
         {
-            if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> list))
+            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> list))
                 return list.Count;
             return 0;
         }
@@ -212,7 +211,7 @@ namespace zFramework.Pool
                 list = new List<GameObject>();
             if (!appendList)
                 list.Clear();
-            if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> pooled))
+            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> pooled))
                 list.AddRange(pooled);
             return list;
         }
@@ -222,9 +221,13 @@ namespace zFramework.Pool
                 list = new List<T>();
             if (!appendList)
                 list.Clear();
-            if (Instance.pooledObjects.TryGetValue(prefab.gameObject, out List<GameObject> pooled))
-                for (int i = 0; i < pooled.Count; ++i)
-                    list.Add(pooled[i].GetComponent<T>());
+            if (Instance.pooledObjects.TryGetValue(prefab.gameObject, out Queue<GameObject> pooled)) 
+            {
+                foreach (var item in pooled)
+                {
+                    list.Add(item.GetComponent<T>());
+                }
+            }
             return list;
         }
 
@@ -258,13 +261,12 @@ namespace zFramework.Pool
         public static void DestroyAll<T>(T prefab) where T : Component => DestroyAll(prefab.gameObject);
         public static void DestroyPooled(GameObject prefab)
         {
-            if (Instance.pooledObjects.TryGetValue(prefab, out List<GameObject> pooled))
+            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> pooled))
             {
-                for (int i = 0; i < pooled.Count; ++i)
+                while (pooled.Count>0)
                 {
-                    Destroy(pooled[i]);
+                    Destroy(pooled.Dequeue());
                 }
-                pooled.Clear();
             }
         }
         public static void DestroyAll(GameObject prefab)
