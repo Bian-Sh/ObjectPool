@@ -5,12 +5,11 @@ namespace zFramework.Pool
     public sealed class ObjectPool : MonoBehaviour
     {
         #region Fileds
-        public StartupPoolMode startupPoolMode;
-        public StartupPool[] startupPools;
+        public PoolInitMode poolInitMode;
+        public StartupPool[] presetPools;
         static ObjectPool _instance;
-        bool startupPoolsCreated;
-        Dictionary<GameObject, GameObject> spawnedObjects = new Dictionary<GameObject, GameObject>();
-        Dictionary<GameObject, Queue<GameObject>> pooledObjects = new Dictionary<GameObject, Queue<GameObject>>();
+        static Dictionary<GameObject, GameObject> spawnedObjects = new Dictionary<GameObject, GameObject>();
+        static Dictionary<GameObject, Queue<GameObject>> pooledObjects = new Dictionary<GameObject, Queue<GameObject>>();
         #endregion
 
         #region Singleton and pre-instantiate
@@ -18,56 +17,39 @@ namespace zFramework.Pool
         {
             get
             {
+                _instance ??= FindObjectOfType<ObjectPool>();
                 if (!_instance)
                 {
-                    _instance = (ObjectPool)FindObjectOfType(typeof(ObjectPool));
-                    if (!_instance)
-                    {
-                        var go = new GameObject("[ObjectPool]");
-                        _instance = go.AddComponent<ObjectPool>();
-                    }
+                    new GameObject("[ObjectPool]", typeof(ObjectPool));
                 }
                 return _instance;
             }
         }
         void Awake()
         {
-            if (_instance != null && _instance.gameObject != gameObject)
+            if (_instance && _instance.gameObject != gameObject)
             {
-                if (Application.isPlaying)
-                {
-                    Destroy(gameObject);
-                }
-                else
-                {
-                    DestroyImmediate(gameObject);
-                }
+                DestroyImmediate(gameObject);
             }
             else
             {
-                _instance = GetComponent<ObjectPool>();
+                _instance = this;
                 DontDestroyOnLoad(gameObject);
+                if (poolInitMode == PoolInitMode.Awake)
+                    CreateStartupPools();
             }
-            hideFlags = HideFlags.HideAndDontSave;
-            if (startupPoolMode == StartupPoolMode.Awake)
-                CreateStartupPools();
         }
-
         void Start()
         {
-            if (startupPoolMode == StartupPoolMode.Start)
+            if (poolInitMode == PoolInitMode.Start)
                 CreateStartupPools();
         }
 
         public static void CreateStartupPools()
         {
-            if (!Instance.startupPoolsCreated)
+            foreach (var pool in _instance.presetPools)
             {
-                Instance.startupPoolsCreated = true;
-                var pools = Instance.startupPools;
-                if (pools != null && pools.Length > 0)
-                    for (int i = 0; i < pools.Length; ++i)
-                        CreatePool(pools[i].prefab, pools[i].size);
+                CreatePool(pool.prefab, pool.size);
             }
         }
         #endregion
@@ -76,10 +58,10 @@ namespace zFramework.Pool
         public static void CreatePool<T>(T prefab, int initialPoolSize) where T : Component => CreatePool(prefab.gameObject, initialPoolSize);
         public static void CreatePool(GameObject prefab, int initialPoolSize)
         {
-            if (prefab != null && !Instance.pooledObjects.ContainsKey(prefab))
+            if (prefab != null && !pooledObjects.ContainsKey(prefab))
             {
                 var list = new Queue<GameObject>();
-                Instance.pooledObjects.Add(prefab, list);
+                pooledObjects.Add(prefab, list);
 
                 if (initialPoolSize > 0)
                 {
@@ -113,9 +95,9 @@ namespace zFramework.Pool
         public static GameObject Spawn(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation)
         {
             GameObject obj = null;
-            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> list))  //1. check pool first
+            if (pooledObjects.TryGetValue(prefab, out Queue<GameObject> list))  //1. check pool first
             {
-                while (obj == null && list.Count > 0) // in case of unexpected destroy 
+                while (!obj && list.Count > 0) // in case of unexpected destroy 
                 {
                     obj = list.Dequeue();
                 }
@@ -124,36 +106,41 @@ namespace zFramework.Pool
             obj.transform.SetParent(parent, !(obj.transform is RectTransform)); // 3. the second param should be false if the object is a ui component.
             obj.transform.localPosition = position;
             obj.transform.localRotation = rotation;
-            if (Instance.pooledObjects.ContainsKey(prefab)) //4.only record spawned object if the prefab has been init before
+            if (pooledObjects.ContainsKey(prefab)) //4.only record spawned object if the prefab has been init before
             {
-                Instance.spawnedObjects.Add(obj, prefab);
+                spawnedObjects.Add(obj, prefab);
             }
             return obj;
         }
         #endregion
 
         #region Recyle
-        public static void Recycle<T>(T obj) where T : Component => Recycle(obj.gameObject);
-        public static void Recycle(GameObject obj)
+        public static void Recycle<T>(T instance) where T : Component => Recycle(instance.gameObject);
+        public static void Recycle(GameObject instance)
         {
-            if (Instance.spawnedObjects.TryGetValue(obj, out GameObject prefab))
-                Recycle(obj, prefab);
+            if (pooledObjects.ContainsKey(instance))
+            {
+                Debug.LogError($"{nameof(ObjectPool)}: 你正在尝试回收预制体 {instance.name}，该行为不被支持！");
+                return;
+            }
+            if (spawnedObjects.TryGetValue(instance, out GameObject prefab))
+                Recycle(instance, prefab);
             else
-                DestroyImmediate(obj);
+                DestroyImmediate(instance);
         }
-        static void Recycle(GameObject obj, GameObject prefab)
+        static void Recycle(GameObject instance, GameObject prefab)
         {
-            Instance.pooledObjects[prefab].Enqueue(obj);
-            Instance.spawnedObjects.Remove(obj);
-            obj.transform.SetParent(Instance.transform, !(obj.transform is RectTransform));
-            obj.SetActive(false);
+            pooledObjects[prefab].Enqueue(instance);
+            spawnedObjects.Remove(instance);
+            instance.transform.SetParent(Instance.transform, !(instance.transform is RectTransform));
+            instance.SetActive(false);
         }
 
         public static void RecycleAll<T>(T prefab) where T : Component => RecycleAll(prefab.gameObject);
         public static void RecycleAll(GameObject prefab)
         {
             var temp = new Queue<GameObject>();
-            foreach (var item in Instance.spawnedObjects)
+            foreach (var item in spawnedObjects)
             {
                 if (item.Value == prefab)
                 {
@@ -167,7 +154,7 @@ namespace zFramework.Pool
         }
         public static void RecycleAll()
         {
-            var temp = new Queue<GameObject>(Instance.spawnedObjects.Keys);
+            var temp = new Queue<GameObject>(spawnedObjects.Keys);
             while (temp.Count > 0)
             {
                 Recycle(temp.Dequeue());
@@ -179,7 +166,7 @@ namespace zFramework.Pool
         public static int CountPooled<T>(T prefab) where T : Component => CountPooled(prefab.gameObject);
         public static int CountPooled(GameObject prefab)
         {
-            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> list))
+            if (pooledObjects.TryGetValue(prefab, out var list))
                 return list.Count;
             return 0;
         }
@@ -187,7 +174,7 @@ namespace zFramework.Pool
         public static int CountSpawned(GameObject prefab)
         {
             int count = 0;
-            foreach (var instancePrefab in Instance.spawnedObjects.Values)
+            foreach (var instancePrefab in spawnedObjects.Values)
             {
                 if (prefab == instancePrefab)
                 {
@@ -200,28 +187,26 @@ namespace zFramework.Pool
         public static int CountAllPooled()
         {
             int count = 0;
-            foreach (var list in Instance.pooledObjects.Values)
+            foreach (var list in pooledObjects.Values)
                 count += list.Count;
             return count;
         }
 
         public static List<GameObject> GetPooled(GameObject prefab, List<GameObject> list, bool appendList)
         {
-            if (list == null)
-                list = new List<GameObject>();
+            list ??= new List<GameObject>();
             if (!appendList)
                 list.Clear();
-            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> pooled))
+            if (pooledObjects.TryGetValue(prefab, out var pooled))
                 list.AddRange(pooled);
             return list;
         }
         public static List<T> GetPooled<T>(T prefab, List<T> list, bool appendList) where T : Component
         {
-            if (list == null)
-                list = new List<T>();
+            list ??= new List<T>();
             if (!appendList)
                 list.Clear();
-            if (Instance.pooledObjects.TryGetValue(prefab.gameObject, out Queue<GameObject> pooled)) 
+            if (pooledObjects.TryGetValue(prefab.gameObject, out var pooled))
             {
                 foreach (var item in pooled)
                 {
@@ -233,24 +218,21 @@ namespace zFramework.Pool
 
         public static List<GameObject> GetSpawned(GameObject prefab, List<GameObject> list, bool appendList)
         {
-            if (list == null)
-                list = new List<GameObject>();
+            list ??= new List<GameObject>();
             if (!appendList)
                 list.Clear();
-            foreach (var item in Instance.spawnedObjects)
+            foreach (var item in spawnedObjects)
                 if (item.Value == prefab)
                     list.Add(item.Key);
             return list;
         }
         public static List<T> GetSpawned<T>(T prefab, List<T> list, bool appendList) where T : Component
         {
-            if (list == null)
-                list = new List<T>();
+            list ??= new List<T>();
             if (!appendList)
                 list.Clear();
-            var prefabObj = prefab.gameObject;
-            foreach (var item in Instance.spawnedObjects)
-                if (item.Value == prefabObj)
+            foreach (var item in spawnedObjects)
+                if (item.Value == prefab.gameObject)
                     list.Add(item.Key.GetComponent<T>());
             return list;
         }
@@ -261,9 +243,9 @@ namespace zFramework.Pool
         public static void DestroyAll<T>(T prefab) where T : Component => DestroyAll(prefab.gameObject);
         public static void DestroyPooled(GameObject prefab)
         {
-            if (Instance.pooledObjects.TryGetValue(prefab, out Queue<GameObject> pooled))
+            if (pooledObjects.TryGetValue(prefab, out Queue<GameObject> pooled))
             {
-                while (pooled.Count>0)
+                while (pooled.Count > 0)
                 {
                     Destroy(pooled.Dequeue());
                 }
@@ -299,8 +281,8 @@ namespace zFramework.Pool
         public static GameObject Spawn(this GameObject prefab, Vector3 position) => ObjectPool.Spawn(prefab, null, position, Quaternion.identity);
         public static GameObject Spawn(this GameObject prefab, Transform parent) => ObjectPool.Spawn(prefab, parent, Vector3.zero, Quaternion.identity);
         public static GameObject Spawn(this GameObject prefab) => ObjectPool.Spawn(prefab, null, Vector3.zero, Quaternion.identity);
-        public static void Recycle<T>(this T obj) where T : Component => ObjectPool.Recycle(obj);
-        public static void Recycle(this GameObject obj) => ObjectPool.Recycle(obj);
+        public static void Recycle<T>(this T instance) where T : Component => ObjectPool.Recycle(instance);
+        public static void Recycle(this GameObject instance) => ObjectPool.Recycle(instance);
         public static void RecycleAll<T>(this T prefab) where T : Component => ObjectPool.RecycleAll(prefab);
         /// <summary>
         /// Recycle all objects instantiated from this prefab to the object pool.
@@ -348,13 +330,11 @@ namespace zFramework.Pool
         public int size;
         public GameObject prefab;
     }
-    public enum StartupPoolMode
+    public enum PoolInitMode
     {
         Awake,
         Start,
         Manually
     };
-
-
     #endregion
 }
