@@ -120,13 +120,13 @@ namespace zFramework.Pool
         {
             if (pooledObjects.ContainsKey(instance))
             {
-                Debug.LogError($"{nameof(ObjectPool)}: ÄãÕıÔÚ³¢ÊÔ»ØÊÕÔ¤ÖÆÌå {instance.name}£¬¸ÃĞĞÎª²»±»Ö§³Ö£¡");
+                Debug.LogError($"{nameof(ObjectPool)}: ä½ æ­£åœ¨å°è¯•å›æ”¶é¢„åˆ¶ä½“ {instance.name}ï¼Œè¯¥è¡Œä¸ºä¸è¢«æ”¯æŒï¼");
                 return;
             }
             if (spawnedObjects.TryGetValue(instance, out GameObject prefab))
                 Recycle(instance, prefab);
             else
-                DestroyImmediate(instance);
+                Destroy(instance);
         }
         static void Recycle(GameObject instance, GameObject prefab)
         {
@@ -162,7 +162,7 @@ namespace zFramework.Pool
         }
         #endregion
 
-        #region Querying ²éÑ¯
+        #region Querying æŸ¥è¯¢
         public static int CountPooled<T>(T prefab) where T : Component => CountPooled(prefab.gameObject);
         public static int CountPooled(GameObject prefab)
         {
@@ -247,7 +247,7 @@ namespace zFramework.Pool
             {
                 while (pooled.Count > 0)
                 {
-                    Destroy(pooled.Dequeue());
+                    (pooled.Dequeue());
                 }
             }
         }
@@ -261,7 +261,7 @@ namespace zFramework.Pool
 
     #region  Assistant Type
     /// <summary>
-    /// À©Õ¹·½·¨ËùÔÚ
+    /// æ‰©å±•æ–¹æ³•æ‰€åœ¨
     /// </summary>
     public static class ObjectPoolExtensions
     {
@@ -286,9 +286,9 @@ namespace zFramework.Pool
         public static void RecycleAll<T>(this T prefab) where T : Component => ObjectPool.RecycleAll(prefab);
         /// <summary>
         /// Recycle all objects instantiated from this prefab to the object pool.
-        /// ½«´Ó´ËÔ¤ÖÆÌåÊµÀı»¯³öµÄËùÓĞ¶ÔÏó»ØÊÕµ½¶ÔÏó³Ø
+        /// å°†ä»æ­¤é¢„åˆ¶ä½“å®ä¾‹åŒ–å‡ºçš„æ‰€æœ‰å¯¹è±¡å›æ”¶åˆ°å¯¹è±¡æ± 
         /// </summary>
-        /// <param name="prefab">ÇëÖ¸¶¨Ô¤ÖÆÌå</param>
+        /// <param name="prefab">è¯·æŒ‡å®šé¢„åˆ¶ä½“</param>
         public static void RecycleAll(this GameObject prefab) => ObjectPool.RecycleAll(prefab);
         public static int CountPooled<T>(this T prefab) where T : Component => ObjectPool.CountPooled(prefab);
         public static int CountPooled(this GameObject prefab) => ObjectPool.CountPooled(prefab);
@@ -309,16 +309,16 @@ namespace zFramework.Pool
 
         /// <summary>
         ///  Destroy GameObject those has recycled into the pool
-        ///  Ïú»Ù»ØÊÕµ½³ØÖĞµÄÓÎÏ·¶ÔÏó¡£
+        ///  é”€æ¯å›æ”¶åˆ°æ± ä¸­çš„æ¸¸æˆå¯¹è±¡ã€‚
         /// </summary>
-        /// <param name="prefab">ÇëÖ¸¶¨Ô¤ÖÆÌå</param>
+        /// <param name="prefab">è¯·æŒ‡å®šé¢„åˆ¶ä½“</param>
         public static void DestroyPooled(this GameObject prefab) => ObjectPool.DestroyPooled(prefab);
         /// <summary>
         ///  Destroy GameObject those has recycled into the pool
-        ///  Ïú»Ù»ØÊÕµ½³ØÖĞµÄÓÎÏ·¶ÔÏó¡£
+        ///  é”€æ¯å›æ”¶åˆ°æ± ä¸­çš„æ¸¸æˆå¯¹è±¡ã€‚
         /// </summary>
-        /// <typeparam name="T">³Ø»¯µÄ¶ÔÏóÀàĞÍ</typeparam>
-        /// <param name="prefab">ÇëÖ¸¶¨Ô¤ÖÆÌå</param>
+        /// <typeparam name="T">æ± åŒ–çš„å¯¹è±¡ç±»å‹</typeparam>
+        /// <param name="prefab">è¯·æŒ‡å®šé¢„åˆ¶ä½“</param>
         public static void DestroyPooled<T>(this T prefab) where T : Component => ObjectPool.DestroyPooled(prefab.gameObject);
         public static void DestroyAll(this GameObject prefab) => ObjectPool.DestroyAll(prefab);
         public static void DestroyAll<T>(this T prefab) where T : Component => ObjectPool.DestroyAll(prefab.gameObject);
