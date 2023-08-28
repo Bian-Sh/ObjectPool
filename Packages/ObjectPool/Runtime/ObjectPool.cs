@@ -124,9 +124,15 @@ namespace zFramework.Pool
                 return;
             }
             if (spawnedObjects.TryGetValue(instance, out GameObject prefab))
+            {
                 Recycle(instance, prefab);
-            else
+            }
+            else if (instance.transform.parent != Instance.transform)
+            {
+                //约定位于 ObjectPool 子节点下表明已经回收
+                // 否则不属于 ObjectPool 管理的对象，直接销毁
                 Destroy(instance);
+            }
         }
         static void Recycle(GameObject instance, GameObject prefab)
         {
@@ -247,7 +253,7 @@ namespace zFramework.Pool
             {
                 while (pooled.Count > 0)
                 {
-                    (pooled.Dequeue());
+                    Destroy(pooled.Dequeue());
                 }
             }
         }
