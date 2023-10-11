@@ -8,6 +8,7 @@ namespace zFramework.Pool
         public PoolInitMode poolInitMode;
         public StartupPool[] presetPools;
         static ObjectPool _instance;
+        static Transform container;
         static Dictionary<GameObject, GameObject> spawnedObjects = new Dictionary<GameObject, GameObject>();
         static Dictionary<GameObject, Queue<GameObject>> pooledObjects = new Dictionary<GameObject, Queue<GameObject>>();
         #endregion
@@ -34,6 +35,11 @@ namespace zFramework.Pool
             else
             {
                 _instance = this;
+                var go = new GameObject("[PoolContainer]");
+                container = go.transform;
+                container.SetParent(transform);
+                go.SetActive(false);
+                go.hideFlags = HideFlags.HideInHierarchy;
                 DontDestroyOnLoad(gameObject);
                 if (poolInitMode == PoolInitMode.Awake)
                     CreateStartupPools();
@@ -65,16 +71,11 @@ namespace zFramework.Pool
 
                 if (initialPoolSize > 0)
                 {
-                    bool active = prefab.activeSelf;
-                    prefab.SetActive(false);
-                    Transform parent = Instance.transform;
                     while (list.Count < initialPoolSize)
                     {
-                        var obj = Instantiate(prefab);
-                        obj.transform.SetParent(parent, !(obj.transform is RectTransform));
+                        var obj = Instantiate(prefab, container, !(prefab.transform is RectTransform));
                         list.Enqueue(obj);
                     }
-                    prefab.SetActive(active);
                 }
             }
         }
@@ -127,7 +128,7 @@ namespace zFramework.Pool
             {
                 Recycle(instance, prefab);
             }
-            else if (instance.transform.parent != Instance.transform)
+            else if (instance.transform.parent != container)
             {
                 //约定位于 ObjectPool 子节点下表明已经回收
                 // 否则不属于 ObjectPool 管理的对象，直接销毁
@@ -138,8 +139,8 @@ namespace zFramework.Pool
         {
             pooledObjects[prefab].Enqueue(instance);
             spawnedObjects.Remove(instance);
-            instance.transform.SetParent(Instance.transform, !(instance.transform is RectTransform));
-            instance.SetActive(false);
+            instance.transform.SetParent(container, !(instance.transform is RectTransform));
+            instance.SetActive(prefab.activeSelf);
         }
 
         public static void RecycleAll<T>(T prefab) where T : Component => RecycleAll(prefab.gameObject);
