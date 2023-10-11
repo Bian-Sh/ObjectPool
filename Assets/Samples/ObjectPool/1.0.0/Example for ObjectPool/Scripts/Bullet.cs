@@ -30,7 +30,6 @@ public class Bullet : MonoBehaviour
 
 		//Spawn a pooled explosion prefab
 		var exp = explosionPrefab.Spawn(transform.position);
-		exp.gameObject.SetActive(true);
 
 		//Recycle this pooled bullet instance
 		gameObject.Recycle();
