@@ -1,14 +1,14 @@
 {
   "name": "com.bshsf.objectpool",
   "displayName": "ObjectPool",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2019.4",
   "type": "library",
   "description": "ObjectPool\n \n\u00b7 Selectively pool objects based on prefab type\n- Simple and expressive syntax for instantiation and recycling\n- Extension methods make it more natural and expressive\n- Prefabs Pre-instantiate support",
   "samples": [
     {
       "displayName": "Example for ObjectPool",
-      "description": "一个简单的测试用例，更多API的使用请移步单例测试用例",
+      "description": "\u4e00\u4e2a\u7b80\u5355\u7684\u6d4b\u8bd5\u7528\u4f8b\uff0c\u66f4\u591aAPI\u7684\u4f7f\u7528\u8bf7\u79fb\u6b65\u5355\u4f8b\u6d4b\u8bd5\u7528\u4f8b",
       "path": "Samples~/Example"
     }
   ]
